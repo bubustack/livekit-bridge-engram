@@ -1,0 +1,176 @@
+apiVersion: catalog.bubustack.io/v1alpha1
+kind: EngramTemplate
+metadata:
+  name: livekit-bridge
+  annotations:
+    registry.bubustack.io/maturity: experimental
+spec:
+  version: 0.1.0
+  description: Realtime LiveKit ingress/egress bridge for bobrapet streaming stories.
+  image: ghcr.io/bubustack/livekit-bridge-engram:0.1.0
+  supportedModes:
+    - deployment
+    - job
+  configSchema:
+    type: object
+    required:
+      - livekitURL
+    properties:
+      livekitURL:
+        type: string
+        description: WSS/HTTPS URL of your LiveKit deployment or sandbox.
+      agentIdentityPrefix:
+        type: string
+        description: Prefix used when auto-generating the bot's participant identity.
+        default: bubu-agent
+      playbackTrackName:
+        type: string
+        description: Name of the playback track published to LiveKit.
+        default: agent-playback
+      sourceAllowlist:
+        type: array
+        description: Optional list of participant identities to capture (supports exact, '*', and 'prefix*').
+        items:
+          type: string
+      capture:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+            description: Enable subscribing to participant audio and forwarding PCM frames into the story pipeline.
+          encoding:
+            type: string
+            default: pcm
+          sampleRate:
+            type: integer
+            default: 48000
+          channels:
+            type: integer
+            default: 1
+      playback:
+        type: object
+        properties:
+          enabled:
+            type: boolean
+            default: true
+            description: Enable publishing an audio playback track and applying downstream audio directives.
+      chat:
+        type: object
+        description: LiveKit room chat bridge configuration.
+        properties:
+          enabled:
+            type: boolean
+            description: Enable forwarding LiveKit room chat messages into the story pipeline.
+            default: false
+          topic:
+            type: string
+            description: Optional custom UserData topic. Leave empty to use the standard LiveKit room chat text stream topic `lk.chat`.
+            default: lk.chat
+  inputSchema:
+    type: object
+    properties:
+      room:
+        type: object
+        description: LiveKit room context. Required when not supplied via static config.
+        required:
+          - name
+        properties:
+          name: { type: string }
+          sid: { type: string }
+      participant:
+        type: object
+        properties:
+          identity: { type: string }
+          sid: { type: string }
+      event:
+        type: object
+        description: Raw webhook payload forwarded from the impulse.
+      policy:
+        type: object
+        description: Policy metadata forwarded from the impulse.
+      agentIdentity:
+        type: string
+        description: Optional override for the bot's LiveKit identity.
+      sessionId:
+        type: string
+        description: Trigger/session identifier used for correlation and lifecycle hooks.
+      sourceAllowlist:
+        type: array
+        description: Optional runtime allowlist override (exact match, '*', or 'prefix*').
+        items:
+          type: string
+  outputSchema:
+    anyOf:
+      - type: object
+        description: LiveKit participant audio forwarded as native stream audio frames.
+        required:
+          - audio
+          - metadata
+        properties:
+          audio:
+            type: object
+            required:
+              - pcm
+            properties:
+              pcm:
+                type: string
+                description: Base64-encoded PCM frame bytes.
+              sampleRateHz: { type: integer }
+              channels: { type: integer }
+              codec: { type: string }
+              timestamp: { type: integer, description: Frame timestamp in nanoseconds. }
+          metadata:
+            type: object
+            additionalProperties:
+              type: string
+      - type: object
+        description: Chat message forwarded from a LiveKit participant.
+        required:
+          - payload
+          - metadata
+        properties:
+          payload:
+            type: object
+            properties:
+              text: { type: string }
+              sender: { type: string }
+              topic: { type: string }
+          metadata:
+            type: object
+            additionalProperties:
+              type: string
+      - type: object
+        description: Session lifecycle hook payload emitted on join/leave.
+        required:
+          - payload
+          - metadata
+        properties:
+          payload:
+            type: object
+            properties:
+              kind: { type: string }
+              type:
+                enum: [livekit.session.started, livekit.session.ended]
+              room: { type: object }
+              participant: { type: object }
+          metadata:
+            type: object
+            additionalProperties:
+              type: string
+  secretSchema:
+    livekit:
+      required: true
+      description: LiveKit API key/secret with privileges to join rooms.
+      mountType: env
+      envPrefix: LIVEKIT_
+      expectedKeys:
+        - API_KEY
+        - API_SECRET
+  execution:
+    service:
+      ports:
+        - name: grpc
+          protocol: TCP
+          port: 50051
+          targetPort: 50051
