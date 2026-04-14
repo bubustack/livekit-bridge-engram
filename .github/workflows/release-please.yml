@@ -1,0 +1,138 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+
+concurrency:
+  group: release-please-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GHCR_IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
+      - name: Checkout code
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/checkout@v6
+
+      - name: Set up Go
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
+          cache-dependency-path: go.sum
+
+      - name: Run lint and tests
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          make lint
+          make test
+
+      - name: Set up Docker Buildx
+        if: ${{ steps.release.outputs.release_created }}
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        if: ${{ steps.release.outputs.release_created }}
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        if: ${{ steps.release.outputs.release_created }}
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.GHCR_IMAGE }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ steps.release.outputs.tag_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.release.outputs.tag_name }}
+            type=semver,pattern={{major}},value=${{ steps.release.outputs.tag_name }}
+            type=raw,value=${{ steps.release.outputs.tag_name }}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        if: ${{ steps.release.outputs.release_created }}
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Detect template manifest
+        if: ${{ steps.release.outputs.release_created }}
+        id: template
+        run: |
+          set -euo pipefail
+          if [ -f Engram.yaml ]; then
+            template_file="Engram.yaml"
+            template_kind="EngramTemplate"
+          elif [ -f Impulse.yaml ]; then
+            template_file="Impulse.yaml"
+            template_kind="ImpulseTemplate"
+          else
+            echo "Expected Engram.yaml or Impulse.yaml at repo root" >&2
+            exit 1
+          fi
+
+          echo "file=${template_file}" >> "$GITHUB_OUTPUT"
+          echo "kind=${template_kind}" >> "$GITHUB_OUTPUT"
+          echo "latest_url=https://github.com/${{ github.repository }}/releases/latest/download/${template_file}" >> "$GITHUB_OUTPUT"
+          echo "versioned_url=https://github.com/${{ github.repository }}/releases/download/${{ steps.release.outputs.tag_name }}/${template_file}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload template manifest to GitHub release
+        if: ${{ steps.release.outputs.release_created }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.release.outputs.tag_name }}" "${{ steps.template.outputs.file }}" --clobber
+
+      - name: Summarize release
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          {
+            echo "## Release ${{ steps.release.outputs.tag_name }} 🚀"
+            echo
+            echo "- **GitHub Release**: https://github.com/${{ github.repository }}/releases/tag/${{ steps.release.outputs.tag_name }}"
+            echo "- **Container Image**: \`${{ env.GHCR_IMAGE }}:${{ steps.release.outputs.tag_name }}\`"
+            echo "- **Template Kind**: \`${{ steps.template.outputs.kind }}\`"
+            echo "- **Latest Template URL**: ${{ steps.template.outputs.latest_url }}"
+            echo "- **Pinned Template URL**: ${{ steps.template.outputs.versioned_url }}"
+            echo
+            echo "### Install the template"
+            echo '```bash'
+            echo "kubectl apply -f ${{ steps.template.outputs.latest_url }}"
+            echo '```'
+            echo
+            echo "### Pull the image"
+            echo '```bash'
+            echo "docker pull ${{ env.GHCR_IMAGE }}:${{ steps.release.outputs.tag_name }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
