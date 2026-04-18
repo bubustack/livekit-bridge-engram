@@ -7,7 +7,7 @@ require (
 	github.com/bubustack/core v0.1.3
 	github.com/bubustack/tractatus v0.1.2
 	github.com/livekit/media-sdk v0.0.0-20251106223430-dd8f5e0de2cf
-	github.com/livekit/protocol v1.42.3-0.20251023002554-070839e4cae7
+	github.com/livekit/protocol v1.45.3
 	golang.org/x/sync v0.20.0
 )
 
@@ -55,7 +55,7 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/gammazero/deque v1.2.0 // indirect
-	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.5 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
@@ -74,7 +74,7 @@ require (
 	github.com/lithammer/shortuuid/v4 v4.2.0 // indirect
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
 	github.com/livekit/mediatransportutil v0.0.0-20250922175932-f537f0880397 // indirect
-	github.com/livekit/psrpc v0.7.0 // indirect
+	github.com/livekit/psrpc v0.7.1 // indirect
 	github.com/livekit/server-sdk-go/v2 v2.12.8
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
