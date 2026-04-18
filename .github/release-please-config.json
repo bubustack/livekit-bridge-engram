@@ -5,6 +5,12 @@
       "release-type": "go",
       "package-name": "livekit-bridge-engram",
       "include-component-in-tag": false,
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "Engram.yaml"
+        }
+      ],
       "changelog-sections": [
         {
           "type": "feat",
