@@ -16,6 +16,18 @@ jobs:
       - name: Clone the code
         uses: actions/checkout@v6
 
+      - name: Install native media dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            pkg-config \
+            libopus-dev \
+            libopusfile-dev \
+            libsoxr-dev \
+            libogg-dev \
+            libgomp1
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
