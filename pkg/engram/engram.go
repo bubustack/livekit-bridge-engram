@@ -831,6 +831,10 @@ func (e *LiveKitAgent) forwardChat(
 			}
 			streamMsg := sdkengram.StreamMessage{
 				Payload: payload,
+				Binary: &sdkengram.BinaryFrame{
+					Payload:  payload,
+					MimeType: "application/json",
+				},
 				Metadata: map[string]string{
 					"source":          "livekit",
 					"provider":        "livekit",

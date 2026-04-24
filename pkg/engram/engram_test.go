@@ -288,8 +288,14 @@ func TestForwardChatMessage(t *testing.T) {
 	if msg.Metadata["participant.id"] != testUserOne {
 		t.Errorf("expected participant.id %s, got %q", testUserOne, msg.Metadata["participant.id"])
 	}
-	if msg.Binary != nil {
-		t.Fatalf("expected chat ingress payload to stay in Payload only, got binary=%q", string(msg.Binary.Payload))
+	if msg.Binary == nil {
+		t.Fatal("expected chat message to include Binary frame for hub schema validation")
+	}
+	if msg.Binary.MimeType != "application/json" {
+		t.Fatalf("expected binary MimeType application/json, got %q", msg.Binary.MimeType)
+	}
+	if string(msg.Payload) != string(msg.Binary.Payload) {
+		t.Fatalf("expected mirrored payload, payload=%q binary=%q", string(msg.Payload), string(msg.Binary.Payload))
 	}
 
 	var payload map[string]string
