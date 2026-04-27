@@ -60,7 +60,7 @@ require (
 	github.com/aws/smithy-go v1.25.0 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/bep/debounce v1.2.1 // indirect
-	github.com/bubustack/bobrapet v0.1.9
+	github.com/bubustack/bobrapet v0.1.12
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dennwc/iters v1.2.2 // indirect
