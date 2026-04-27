@@ -6,8 +6,8 @@ require (
 	github.com/bubustack/bubu-sdk-go v0.1.4
 	github.com/bubustack/core v0.1.5
 	github.com/bubustack/tractatus v0.1.4
-	github.com/livekit/media-sdk v0.0.0-20260401192012-ea94ab340a57
-	github.com/livekit/protocol v1.45.2-0.20260403151849-8a360e8d0221
+	github.com/livekit/media-sdk v0.0.0-20260424094251-1e21ae1138de
+	github.com/livekit/protocol v1.45.5-0.20260423163244-347de5a2ef78
 	golang.org/x/sync v0.20.0
 )
 
@@ -90,7 +90,7 @@ require (
 	github.com/livekit/mageutil v0.0.0-20250511045019-0f1ff63f7731 // indirect
 	github.com/livekit/mediatransportutil v0.0.0-20260409104613-0fcb3771c3d5 // indirect
 	github.com/livekit/psrpc v0.7.1 // indirect
-	github.com/livekit/server-sdk-go/v2 v2.16.2
+	github.com/livekit/server-sdk-go/v2 v2.16.3
 	github.com/magefile/mage v1.17.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
