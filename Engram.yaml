@@ -127,37 +127,30 @@ spec:
       - type: object
         description: Chat message forwarded from a LiveKit participant.
         required:
-          - payload
-          - metadata
+          - text
+          - sender
         properties:
-          payload:
-            type: object
-            properties:
-              text: { type: string }
-              sender: { type: string }
-              topic: { type: string }
-          metadata:
-            type: object
-            additionalProperties:
-              type: string
+          text: { type: string }
+          sender: { type: string }
+          topic: { type: string }
       - type: object
         description: Session lifecycle hook payload emitted on join/leave.
         required:
-          - payload
-          - metadata
+          - type
+          - kind
+          - room
+          - participant
         properties:
-          payload:
-            type: object
-            properties:
-              kind: { type: string }
-              type:
-                enum: [livekit.session.started, livekit.session.ended]
-              room: { type: object }
-              participant: { type: object }
-          metadata:
-            type: object
-            additionalProperties:
-              type: string
+          kind: { type: string }
+          type:
+            enum: [livekit.session.started, livekit.session.ended]
+          room: { type: object }
+          participant: { type: object }
+          agent: { type: object }
+          event: { type: object }
+          policy: { type: object }
+          hook: { type: object }
+          timestamp: { type: string }
   secretSchema:
     livekit:
       required: true

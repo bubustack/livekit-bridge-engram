@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"os"
 	"testing"
 	"time"
 
@@ -13,6 +14,8 @@ import (
 	"github.com/bubustack/tractatus/transport"
 	lkproto "github.com/livekit/protocol/livekit"
 	lksdk "github.com/livekit/server-sdk-go/v2"
+	"github.com/xeipuuv/gojsonschema"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -497,6 +500,66 @@ func TestEmitSessionEventMirrorsPayloadToBinary(t *testing.T) {
 		}
 	default:
 		t.Fatal("expected emitted session event")
+	}
+}
+
+func TestEngramOutputSchemaAcceptsForwardedChatPayload(t *testing.T) {
+	validateOutputSchema(t, map[string]any{
+		"text":   "Hello, world!",
+		"sender": testUserOne,
+		"topic":  "lk.chat",
+	})
+}
+
+func TestEngramOutputSchemaAcceptsSessionEventPayload(t *testing.T) {
+	validateOutputSchema(t, map[string]any{
+		"kind": "hook",
+		"type": "livekit.session.started",
+		"room": map[string]any{
+			"name": "demo-room",
+			"sid":  "RM_TEST",
+		},
+		"participant": map[string]any{
+			"identity": testUserOne,
+			"sid":      "PA_1",
+		},
+		"agent": map[string]any{
+			"identity": "agent-42",
+		},
+		"hook": map[string]any{
+			"version":   "v1",
+			"event":     "livekit.session.started",
+			"source":    "livekit-bridge",
+			"sessionId": "session-123",
+		},
+		"timestamp": "2026-05-02T06:00:00Z",
+	})
+}
+
+func validateOutputSchema(t *testing.T, payload map[string]any) {
+	t.Helper()
+	raw, err := os.ReadFile("../../Engram.yaml")
+	if err != nil {
+		t.Fatalf("failed to read Engram.yaml: %v", err)
+	}
+	var manifest map[string]any
+	if err := yaml.Unmarshal(raw, &manifest); err != nil {
+		t.Fatalf("failed to parse Engram.yaml: %v", err)
+	}
+	spec, ok := manifest["spec"].(map[string]any)
+	if !ok {
+		t.Fatal("Engram.yaml missing spec")
+	}
+	schema, ok := spec["outputSchema"].(map[string]any)
+	if !ok {
+		t.Fatal("Engram.yaml missing spec.outputSchema")
+	}
+	result, err := gojsonschema.Validate(gojsonschema.NewGoLoader(schema), gojsonschema.NewGoLoader(payload))
+	if err != nil {
+		t.Fatalf("failed to validate output schema: %v", err)
+	}
+	if !result.Valid() {
+		t.Fatalf("expected output schema to accept payload %#v, got errors %v", payload, result.Errors())
 	}
 }
 
