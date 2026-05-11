@@ -7,7 +7,7 @@ require (
 	github.com/bubustack/core v0.1.6
 	github.com/bubustack/tractatus v0.2.0
 	github.com/livekit/media-sdk v0.0.0-20260424094251-1e21ae1138de
-	github.com/livekit/protocol v1.45.6
+	github.com/livekit/protocol v1.45.8
 	golang.org/x/sync v0.20.0
 )
 
